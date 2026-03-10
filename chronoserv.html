@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChronoServ — An Interactive Fiction</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0e0a;
+            color: #e8e6d5;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            overflow-x: hidden;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        h2 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            color: #d4af82;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-style: italic;
+            color: #a89968;
+            margin-bottom: 3rem;
+            font-size: 1rem;
+        }
+
+        .hr {
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #a89968, transparent);
+            margin: 2rem 0;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Title Screen */
+        .title-screen.active {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .title-screen h1 {
+            margin-bottom: 1rem;
+            letter-spacing: 0.15em;
+            font-size: 3.5rem;
+        }
+
+        .title-screen .subtitle {
+            margin-bottom: 4rem;
+        }
+
+        .start-button {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            border: 1px solid #a89968;
+            color: #e8e6d5;
+            text-decoration: none;
+            cursor: pointer;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+            background: transparent;
+            margin-top: 2rem;
+        }
+
+        .start-button:hover {
+            background-color: rgba(168, 153, 104, 0.1);
+            border-color: #d4af82;
+            color: #d4af82;
+        }
+
+        /* Content Area */
+        .content {
+            margin-bottom: 3rem;
+            line-height: 1.9;
+        }
+
+        .content p {
+            margin-bottom: 1.2rem;
+        }
+
+        .content strong {
+            color: #d4af82;
+            font-weight: 500;
+        }
+
+        /* Message/Reply Headers */
+        .message-header {
+            font-family: 'IBM Plex Mono', monospace;
+            color: #a89968;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        /* Collectible Items Box */
+        .write-down {
+            background-color: rgba(212, 175, 130, 0.08);
+            border-left: 3px solid #d4af82;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.95rem;
+            color: #d4af82;
+        }
+
+        /* Form TR-7 Styling */
+        .form-box {
+            border: 2px solid #a89968;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: #e8e6d5;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .form-box-title {
+            color: #d4af82;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .form-line {
+            margin-bottom: 0.8rem;
+        }
+
+        /* Choice Links */
+        .choices {
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(168, 153, 104, 0.3);
+        }
+
+        .choice {
+            display: block;
+            margin: 1rem 0;
+            text-decoration: none;
+            color: #a89968;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .choice:hover {
+            color: #d4af82;
+            padding-left: 0.5rem;
+        }
+
+        .choice::before {
+            content: "▸ ";
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .choice:hover::before {
+            opacity: 1;
+        }
+
+        /* Notebook Sidebar */
+        .notebook {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background-color: rgba(10, 14, 10, 0.95);
+            border: 1px solid #a89968;
+            padding: 1rem;
+            width: 220px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            z-index: 100;
+        }
+
+        .notebook-title {
+            color: #d4af82;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+        }
+
+        .notebook-item {
+            color: #e8e6d5;
+            margin-bottom: 0.4rem;
+            padding-left: 0.3rem;
+            line-height: 1.4;
+        }
+
+        .notebook-item::before {
+            content: "⊙ ";
+            color: #a89968;
+            margin-right: 0.2rem;
+        }
+
+        /* End Screen */
+        .end-screen {
+            text-align: center;
+        }
+
+        .end-screen h1 {
+            margin-top: 2rem;
+            color: #a89968;
+        }
+
+        /* Solution Toggle */
+        .solution-container {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(168, 153, 104, 0.3);
+        }
+
+        .solution-toggle {
+            background: transparent;
+            border: 1px solid #a89968;
+            color: #a89968;
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+
+        .solution-toggle:hover {
+            background-color: rgba(168, 153, 104, 0.1);
+            border-color: #d4af82;
+            color: #d4af82;
+        }
+
+        .solution-content {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: rgba(212, 175, 130, 0.08);
+            border-left: 3px solid #d4af82;
+            text-align: left;
+        }
+
+        .solution-content.visible {
+            display: block;
+        }
+
+        /* Utility Links */
+        .utility-links {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            text-align: center;
+            border-top: 1px solid rgba(168, 153, 104, 0.3);
+        }
+
+        .utility-link {
+            color: #a89968;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin: 0 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .utility-link:hover {
+            color: #d4af82;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .notebook {
+                position: static;
+                width: 100%;
+                max-height: none;
+                margin-top: 2rem;
+                margin-bottom: 0;
+            }
+
+            .choice {
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Code block styling */
+        pre {
+            font-family: 'IBM Plex Mono', monospace;
+            overflow-x: auto;
+            color: #e8e6d5;
+            margin: 1rem 0;
+        }
+
+        code {
+            font-family: 'IBM Plex Mono', monospace;
+            color: #d4af82;
+        }
+
+        /* Emphasis */
+        em {
+            color: #a89968;
+            font-style: italic;
+        }
+
+        .italic {
+            font-style: italic;
+            color: #a89968;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Title Screen -->
+        <div id="titleScreen" class="screen active title-screen">
+            <h1>ChronoServ</h1>
+            <p class="subtitle">An interactive fiction by Andrew</p>
+            <button class="start-button" onclick="goToScreen('M1')">Begin</button>
+        </div>
+
+        <!-- Messages Section -->
+
+        <!-- M1 -->
+        <div id="M1" class="screen">
+            <h2>M1</h2>
+            <div class="content">
+                <p>Hello? Is this ChronoServ? My return transport isn't working. I've been in 1987 for six days now. I'm in a bedsit in one of the Hulme Crescents — third floor, damp on the ceiling, a mattress on the floor. Someone downstairs has been playing Whitney Houston's "I Wanna Dance with Somebody" since breakfast. Through the other wall I can hear The Smiths. Through the floor, something with a lot of bass that I don't recognize. The whole building sounds like three different decades arguing.</p>
+                <p>Outside my window there's a concrete balcony and then just Manchester, going on and on in the rain.</p>
+                <p>The last thing I remember working was the concert. New Order at the Haçienda, June 10th. They closed with "Temptation." Then I went outside and everything went wrong.</p>
+                <p>Please help.</p>
+                <p><strong>Choose your tone:</strong></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply1')">A) Stay calm, be professional.</a>
+                <a class="choice" onclick="goToScreen('Reply2')">B) Make it clear this is urgent.</a>
+                <a class="choice" onclick="goToScreen('Reply3')">C) Demand a supervisor immediately.</a>
+            </div>
+        </div>
+
+        <!-- M2 -->
+        <div id="M2" class="screen">
+            <h2>M2 — MAIN MENU</h2>
+            <div class="content">
+                <p><em>You've been returned to the main menu. Choose a department:</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply5')">A) Technical Support.</a>
+                <a class="choice" onclick="goToScreen('Reply6')">B) Billing & Accounts.</a>
+                <a class="choice" onclick="goToScreen('Reply4')">C) General Inquiries.</a>
+                <a class="choice" id="choiceToM10" style="display: none;" onclick="goToScreen('M10')">D) If you have collected all four items, proceed to final message.</a>
+            </div>
+        </div>
+
+        <!-- M3 -->
+        <div id="M3" class="screen">
+            <h2>M3</h2>
+            <div class="content">
+                <p>I know you said to stay calm but I'm sleeping in the Hulme Crescents on a mattress that smells like someone else's decade. The television gets four channels and one of them is in Welsh. Margaret Thatcher just won another election — I watched it happen on the other three channels simultaneously and everyone in the building started shouting. Someone threw a boot at the wall. I don't know whose boot it was. I don't know whose wall it was.</p>
+                <p>Downstairs has switched from Whitney Houston to Pet Shop Boys. "It's a Sin." Over and over. The whole Crescent smells like someone's cooking something with too much cumin and not enough ventilation.</p>
+                <p>I had a kebab for dinner. Eighty pence. It was fine. Everything is fine. Nothing is fine.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply5')">A) Take a breath. Try again, politely.</a>
+                <a class="choice" onclick="goToScreen('Reply7')">B) Get more upset.</a>
+                <a class="choice" onclick="goToScreen('Reply8')">C) Exaggerate the danger to seem more urgent.</a>
+            </div>
+        </div>
+
+        <!-- M4 -->
+        <div id="M4" class="screen">
+            <h2>M4</h2>
+            <div class="content">
+                <p>I have been "flagged." I don't know what that means. I am a paying customer who is stuck thirty-seven years before my birth and I have been flagged. Yesterday I walked to the newsagent and bought an NME and a Melody Maker just to have something to read. The NME says The Smiths are breaking up. Johnny Marr's gone. Everyone in Manchester is acting like someone died. The woman in the corner shop said, "Well, that's it then, isn't it?" and I didn't know what to say because I know it only gets worse from here.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply4')">A) Apologize. Start over.</a>
+                <a class="choice" onclick="goToScreen('Reply9')">B) Threaten legal action.</a>
+                <a class="choice" onclick="goToScreen('Reply10')">C) "I want to speak to someone who actually knows what a temporal anchor is."</a>
+            </div>
+        </div>
+
+        <!-- M5 -->
+        <div id="M5" class="screen">
+            <h2>M5</h2>
+            <div class="content">
+                <p>Cal from Tech Support is asking what happened at the concert. You were there for New Order's last gig at the Haçienda — Factory Records' own club, Tony Wilson's place. The room was moving. They played "Bizarre Love Triangle" and "Age of Consent" and finished with "Temptation" and for three hours you forgot you were from anywhere else.</p>
+                <p>Then you went outside. And it all went wrong.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply11')">A) Tell the truth. All of it.</a>
+                <a class="choice" onclick="goToScreen('Reply12')">B) Tell most of the truth. Skip the part about after the concert.</a>
+                <a class="choice" onclick="goToScreen('Reply13')">C) "What would hypothetically happen if someone hypothetically spoke to someone they hypothetically shouldn't have?"</a>
+            </div>
+        </div>
+
+        <!-- M6 -->
+        <div id="M6" class="screen">
+            <h2>M6</h2>
+            <div class="content">
+                <p>You've reached ChronoServ Billing. An automated system. In 1987. Via post. You wonder if somewhere in 2045 there's a room full of people hand-writing these letters and sending them back through time via second-class Royal Mail.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply14')">A) "I'd like my account details, please."</a>
+                <a class="choice" onclick="goToScreen('Reply15')">B) "I want to dispute the charges for a trip that has stranded me in the Thatcher era."</a>
+                <a class="choice" onclick="goToScreen('Reply16')">C) "What exactly does my warranty cover?"</a>
+            </div>
+        </div>
+
+        <!-- M7 -->
+        <div id="M7" class="screen">
+            <h2>M7</h2>
+            <div class="content">
+                <p>A different agent. Not Cal. The message arrived at 3am their time — you can tell from the timestamp. The handwriting is different. Smaller. Faster. The ink is blue where Cal's was black, and the letters lean forward like they're in a hurry to get somewhere.</p>
+                <p>Their name is Sable.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply17')">A) Tell them everything. The whole story.</a>
+                <a class="choice" onclick="goToScreen('Reply18')">B) "Is there a workaround? Hypothetically?"</a>
+                <a class="choice" onclick="goToScreen('Reply19')">C) "Forget the anchor for a second. How's your night going?"</a>
+            </div>
+        </div>
+
+        <!-- M8 -->
+        <div id="M8" class="screen">
+            <h2>M8</h2>
+            <div class="content">
+                <p>Cal is running diagnostics on your anchor. He's sent you a readout that looks like a heart monitor for a dying clock. He's circled something in red and written "this is bad" with an arrow. Below that, someone else — different handwriting, blue ink — has added: "understatement."</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply20')">A) "Can you pull up my anchor's calibration specs?"</a>
+                <a class="choice" onclick="goToScreen('Reply21')">B) "How long would a physical rescue take?"</a>
+                <a class="choice" onclick="goToScreen('Reply22')">C) "The readout says 'temporal deviation.' What does that mean?"</a>
+            </div>
+        </div>
+
+        <!-- M9 -->
+        <div id="M9" class="screen">
+            <h2>M9</h2>
+            <div class="content">
+                <p>Sable asked about the concert. You told them about the concert — the heat inside the Haçienda, the sound, the way the bass went through the floor and into your chest. Then Sable asked about after. You told them about after, too. About stepping outside. About the rain. About the stranger.</p>
+                <p>Now it's quiet. The kind of quiet that happens in letters when someone is choosing their next sentence carefully.</p>
+                <p>It's 2am. The building has gone still except for someone on the ground floor playing Echo and the Bunnymen's "The Killing Moon" so quietly you can barely hear it through the concrete. Just the bassline. Just the pulse.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply23')">A) Tell Sable about the stranger. Really tell them.</a>
+                <a class="choice" onclick="goToScreen('Reply18')">B) "Help me. Really help me. Off the record."</a>
+                <a class="choice" onclick="goToScreen('M1')">C) "Thanks for talking. I'll figure it out. New ticket tomorrow."</a>
+                <a class="choice" id="choiceToReply29" style="display: none;" onclick="goToScreen('Reply29')">D) "I think you might be the only real person I've talked to in weeks. Both sides of the time gap."</a>
+            </div>
+        </div>
+
+        <!-- M10 -->
+        <div id="M10" class="screen">
+            <h2>M10 — THE FINAL MESSAGE</h2>
+            <div class="content">
+                <p>You have:</p>
+                <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
+                    <li>An override code.</li>
+                    <li>An anchor serial number.</li>
+                    <li>A calibration frequency.</li>
+                </ul>
+                <p>You'll also need to prove where and when you are. The system is going to ask you something only someone <em>there</em> would know. Think about the concert. Think about what you heard.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply27')">If you're ready, go to the reset form.</a>
+                <a class="choice" onclick="goToScreen('M2')">If you're missing something, return to the menu.</a>
+            </div>
+        </div>
+
+        <!-- M11 -->
+        <div id="M11" class="screen">
+            <h2>M11 — DEAD END</h2>
+            <div class="content">
+                <p>Your ticket has been suspended. The bedsit is quiet.</p>
+                <p>Outside, Manchester carries on. Someone on the ground floor is having a party — you can hear the bass through the concrete, four floors of it, and someone has propped the stairwell door open so the smoke drifts up. At the newsagent this morning, the front page of the Manchester Evening News said something about the Channel Tunnel. It will take six years to build. You might still be here when it opens.</p>
+                <p>The radio in the kebab shop is playing "The Killing Moon." The owner is singing along, quietly, while he shaves meat off the spit. Eighty pence. Same as yesterday. Same as tomorrow.</p>
+                <p><em>(Your ticket suspension lasts seven days. After that, you may submit a new request.)</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M1')">A) Wait a week. Submit a new ticket.</a>
+                <a class="choice" onclick="goToScreen('M1')">B) Wait a week. Wander around Manchester. Think about your choices.</a>
+            </div>
+        </div>
+
+        <!-- M12 -->
+        <div id="M12" class="screen">
+            <h2>M12 — THE HONEST PATH</h2>
+            <div class="content">
+                <p>You told Sable everything and Sable was kind about it. Genuinely kind. But the extraction costs £2,347,891.00. Adjusted for temporal exchange rates. Non-negotiable.</p>
+                <p>Outside the post office window, a busker is playing "How Soon Is Now?" on an acoustic guitar, badly. A woman walks past with a Woolworths bag. A bus goes by advertising the new Levi's advert — the one with the bloke in the laundrette. Everything is ordinary and thirty-seven years away from where you belong.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply26')">A) Accept the charges. You'll figure it out when you get home.</a>
+                <a class="choice" onclick="goToScreen('Reply18')">B) "There has to be another way."</a>
+                <a class="choice" onclick="goToScreen('M1')">C) You can't afford it. You can't afford anything. Put the pager down.</a>
+            </div>
+        </div>
+
+        <!-- Replies Section -->
+
+        <!-- Reply 1 -->
+        <div id="Reply1" class="screen">
+            <h2>Reply 1</h2>
+            <div class="message-header">Dear Jamie Kowalski,</div>
+            <div class="content">
+                <p>Thank you for contacting ChronoServ Temporal Solutions™! Your ticket number is #88712. Your estimated wait time is — actually, given the nature of temporal displacement, "wait time" is a complicated concept. Let's just say: we're on it.</p>
+                <p>Please select a department from the main menu.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M2')">Continue to Main Menu</a>
+            </div>
+        </div>
+
+        <!-- Reply 2 -->
+        <div id="Reply2" class="screen">
+            <h2>Reply 2</h2>
+            <div class="message-header">Hi Jamie,</div>
+            <div class="content">
+                <p>I can see from your file that you're experiencing temporal displacement. I want you to know that this is more common than you might think — ChronoServ processes over 40,000 displacement tickets per fiscal quarter. You are not alone. You are not forgotten. You are a valued ChronoServ customer.</p>
+                <p>Please take a deep breath. If possible, locate a cup of tea. This is 1987 Britain — there will be a cup of tea nearby. There is always a cup of tea nearby.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M3')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 3 -->
+        <div id="Reply3" class="screen">
+            <h2>Reply 3</h2>
+            <div class="message-header">Dear Valued Customer,</div>
+            <div class="content">
+                <p>Your request has been escalated to our Customer Relations team. Please allow 5–7 business days for a response.</p>
+                <p>ChronoServ values your temporal experience™.</p>
+                <p><em>This reply arrives eleven days later. The postmark is smudged. Someone has drawn a small smiley face on the envelope, which somehow makes it worse.</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M4')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 4 -->
+        <div id="Reply4" class="screen">
+            <h2>Reply 4</h2>
+            <div class="message-header">Frequently Asked Questions</div>
+            <div class="content">
+                <p><strong>Q:</strong> My return anchor isn't working. What do I do?<br>
+                <strong>A:</strong> Please contact Technical Support.</p>
+                <p><strong>Q:</strong> How do I contact Technical Support?<br>
+                <strong>A:</strong> Select Technical Support from the main menu.</p>
+                <p><strong>Q:</strong> Where is the main menu?<br>
+                <strong>A:</strong> You're looking at it.</p>
+                <p><strong>Q:</strong> I'm starting to feel like this is circular.<br>
+                <strong>A:</strong> That's not a question.</p>
+                <p><strong>Q:</strong> Is this a temporal loop?<br>
+                <strong>A:</strong> ChronoServ cannot comment on the metaphysical properties of its own FAQ section.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M2')">Return to Main Menu</a>
+            </div>
+        </div>
+
+        <!-- Reply 5 -->
+        <div id="Reply5" class="screen">
+            <h2>Reply 5</h2>
+            <div class="message-header">Hey there! I'm Cal. Tech Support, Tier 1.</div>
+            <div class="content">
+                <p>Sorry to hear about your situation.</p>
+                <p>Displacement issues are usually pretty straightforward. Nine times out of ten it's a calibration drift and we have you back before your next rent's due. That said — and I'm just reading your file here — there's a flag on your account. A Protocol 7 flag. Which is... less straightforward.</p>
+                <p>Can you walk me through what happened? Start with the concert. I can see you were at the Haçienda on the 10th. Walk me through the night — everything from when you arrived to when you left. Every detail matters here, even the ones that seem small. Especially those.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M5')">Proceed to Concert Questions</a>
+            </div>
+        </div>
+
+        <!-- Reply 6 -->
+        <div id="Reply6" class="screen">
+            <h2>Reply 6</h2>
+            <div class="message-header">Welcome to ChronoServ Billing & Accounts.</div>
+            <div class="content">
+                <p><strong>Account holder:</strong> Jamie Kowalski<br>
+                <strong>Package:</strong> TEMPO BASIC™<br>
+                <em>(1-day return, economy class, no interaction coverage)</em><br>
+                <strong>Departure:</strong> Manchester, June 8, 2045<br>
+                <strong>Destination:</strong> Manchester, June 10, 1987<br>
+                <strong>Return:</strong> FAILED<br>
+                <strong>Remaining balance:</strong> £0.00<br>
+                <strong>Outstanding charges:</strong> PENDING</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M6')">Select an Option</a>
+            </div>
+        </div>
+
+        <!-- Reply 7 -->
+        <div id="Reply7" class="screen">
+            <h2>Reply 7</h2>
+            <div class="message-header">Dear Jamie,</div>
+            <div class="content">
+                <p>Your recent communications have been flagged under our Respectful Correspondence Policy (Section 8.1, subsection: "Please Don't Shout At Us Through Time"). Continued aggressive messaging may result in temporary suspension of your support ticket.</p>
+                <p>Remember: time heals all wounds. Especially with ChronoServ™.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M11')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 8 -->
+        <div id="Reply8" class="screen">
+            <h2>Reply 8</h2>
+            <div class="message-header">Thank you for that information, Jamie.</div>
+            <div class="content">
+                <p>However, our telemetry shows an anomaly at your anchor site consistent with a Protocol 7 deviation at timestamp 21:47 local time. The concert didn't end until after 22:00. But at 21:47, during the encore — your anchor spiked.</p>
+                <p>Would you like to amend your account of events?</p>
+                <p><em>(Note to the reader: Cal has your telemetry now. The system logs everything.)</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M5')">Return to Concert Questions</a>
+            </div>
+        </div>
+
+        <!-- Reply 9 -->
+        <div id="Reply9" class="screen">
+            <h2>Reply 9</h2>
+            <div class="message-header">Dear Jamie Kowalski,</div>
+            <div class="content">
+                <p>Thank you for your feedback. ChronoServ's Terms of Temporal Service (Section 14.3, "Things You Agreed To Without Reading") state that customer-initiated protocol deviations void all warranty protections. Your file has been forwarded to Legal.</p>
+                <p>Please allow 30 business days for review.</p>
+                <p>In the meantime, we recommend enjoying your current time period. Manchester in June 1987 has much to offer, including affordable housing, a thriving independent music scene, and a general election result that we are contractually unable to comment on.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M11')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 10 -->
+        <div id="Reply10" class="screen">
+            <h2>Reply 10</h2>
+            <div class="message-header">Transferring to Advanced Support...</div>
+            <div class="content">
+                <p style="color: #a89968; margin: 1.5rem 0;">...</p>
+                <p style="color: #a89968; margin: 1.5rem 0;">...</p>
+                <p><em>(Three days pass. A different envelope arrives. No ChronoServ logo. Just a name, written in blue biro on a plain white envelope. Inside, the letter is handwritten on what appears to be the back of a canteen menu.)</em></p>
+                <p style="margin-top: 1.5rem;">Hi. I'm Sable. Night shift. What's going on with you?</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M7')">Continue to Sable's Department</a>
+            </div>
+        </div>
+
+        <!-- Reply 11 -->
+        <div id="Reply11" class="screen">
+            <h2>Reply 11</h2>
+            <div class="message-header">Okay, running diagnostics on your anchor now...</div>
+            <div class="content">
+                <p>I can see the calibration drift. Standard stuff — that's your basic return failure. Usually a quick remote fix, takes me about ten minutes. But — hold on.</p>
+                <p>There's a deviation flag. Protocol 7. Timestamp 21:47 local. That's right in the middle of the set — the band would've still been playing. Most people would've been inside.</p>
+                <p>Jamie. Why weren't you inside?</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M8')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 12 -->
+        <div id="Reply12" class="screen">
+            <h2>Reply 12</h2>
+            <div class="message-header">Right, so I'm looking at your telemetry and what you're describing doesn't quite match what I'm seeing.</div>
+            <div class="content">
+                <p>There's a spike at 21:47 local that you didn't mention. It's a big spike, Jamie. It's the kind of spike that makes a Tier 1 tech support agent look up "Protocol 7" for the first time in his career.</p>
+                <p>At 21:47, the band was still playing. Everyone else was inside for the last few songs. So where were you?</p>
+                <p>I need you to walk me through what happened at 21:47. The system logs everything.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M8')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 13 -->
+        <div id="Reply13" class="screen">
+            <h2>Reply 13</h2>
+            <div class="message-header">...Hypothetically?</div>
+            <div class="content">
+                <p>A sustained interaction with a temporal local would corrupt the anchor's return calibration. The passenger would need either a full recalibration — and I'm not going to tell you what that costs hypothetically because you would hypothetically be sick — or... there might be other options.</p>
+                <p>But that's above my clearance. I can transfer you to someone.</p>
+                <p>Hypothetically.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M7')">Continue to Advanced Support</a>
+            </div>
+        </div>
+
+        <!-- Reply 14 -->
+        <div id="Reply14" class="screen">
+            <h2>Reply 14</h2>
+            <div class="message-header">ChronoServ Billing — Account Summary</div>
+            <div class="content">
+                <p><strong>Account holder:</strong> Jamie Kowalski<br>
+                <strong>Package:</strong> TEMPO BASIC™ (Manchester, June 1987)<br>
+                <strong>Anchor unit serial:</strong> #TRV-0447-87M<br>
+                <strong>Outstanding balance:</strong> £0.00<br>
+                <strong>Warranty status:</strong> UNDER REVIEW</p>
+                <p>Please retain this information for your records.</p>
+                <div class="write-down">Write this down: ANCHOR SERIAL — #TRV-0447-87M</div>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="addItem('ANCHOR SERIAL — #TRV-0447-87M'); goToScreen('M2')">Return to Main Menu</a>
+            </div>
+        </div>
+
+        <!-- Reply 15 -->
+        <div id="Reply15" class="screen">
+            <h2>Reply 15</h2>
+            <div class="message-header">Your billing dispute has been filed (Ref: DSP-11206).</div>
+            <div class="content">
+                <p>Please note: disputing charges during an active temporal displacement may result in service interruption. Your support ticket has been placed on administrative hold pending review.</p>
+                <p>Thank you for choosing ChronoServ Temporal Solutions™. We look forward to resolving this matter in a timely — or untimely — fashion.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M11')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 16 -->
+        <div id="Reply16" class="screen">
+            <h2>Reply 16</h2>
+            <div class="message-header">TEMPO BASIC™ Warranty Coverage (Abridged)</div>
+            <div class="content">
+                <p><strong>Section 1.1:</strong> ChronoServ warrants that your temporal transport device will function as described for the duration of your booked experience, subject to conditions outlined in Sections 2 through 47...</p>
+                <p><strong>Section 3.2:</strong> Warranty protection is void in cases of passenger-initiated sustained interaction with temporal locals (see Protocol 7). "Sustained interaction" is defined as verbal or physical contact exceeding ninety (90) seconds in duration...</p>
+                <p><strong>Section 3.3:</strong> "But I was just being friendly" is not a valid warranty claim.</p>
+                <p><strong>Section 14.7:</strong> The phrase "but nobody told me" is addressed in Section 2.1 ("We Told You"), Section 2.2 ("We Told You Again"), and Appendix C ("The Email You Didn't Read").</p>
+                <p><em>(The full warranty document is nine pages long. It arrived folded into a very thick envelope. Jamie talked to the stranger for twenty minutes.)</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M6')">Return to Billing</a>
+            </div>
+        </div>
+
+        <!-- Reply 17 -->
+        <div id="Reply17" class="screen">
+            <h2>Reply 17</h2>
+            <div class="message-header">...Okay, Jamie. I hear you.</div>
+            <div class="content">
+                <p>That's a Protocol 7 violation. Which means your warranty is void and a rescue extraction gets billed at full commercial rate. I'm looking at your file now and...</p>
+                <p>£2,347,891.00. Adjusted for temporal exchange rates.</p>
+                <p>I know. I'm sorry. I really am.</p>
+                <p>Is there anything else I can help with?</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M12')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 18 -->
+        <div id="Reply18" class="screen">
+            <h2>Reply 18</h2>
+            <div class="message-header">Okay. Look. I'm not supposed to tell you this.</div>
+            <div class="content">
+                <p>Every anchor has a manual override built in for exactly this kind of situation. The engineers call it <strong>LOOKING GLASS</strong>. Don't ask me why — I think someone on the dev team had a thing for Lewis Carroll.</p>
+                <p>If you can get your serial number and your calibration frequency, you can trigger a hard reset from your end. The system will also run a temporal verification — it'll ask you something about where and when you are. Something you'd only know if you were really <em>there</em>. Like what you saw. What you heard. Pay attention to where you've been, Jamie. It matters.</p>
+                <p>I didn't tell you any of this. Delete this letter. I mean it. Burn it if you can. The bedsit probably has matches somewhere.</p>
+                <div class="write-down">Write this down: OVERRIDE CODE — LOOKING GLASS</div>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="addItem('OVERRIDE CODE — LOOKING GLASS'); goToScreen('M2')">Return to Main Menu</a>
+            </div>
+        </div>
+
+        <!-- Reply 19 -->
+        <div id="Reply19" class="screen">
+            <h2>Reply 19</h2>
+            <div class="message-header">Ha.</div>
+            <div class="content">
+                <p>My night? It's 3am. I'm on hour nine of a twelve-hour shift. You're the first actual human being I've talked to since a man in 1953 rang in to complain about pager reception near Plymouth. Before that it was chatbot escalations and automated flags for six hours straight.</p>
+                <p>You want to know something embarrassing? I chose your file. It came through flagged and I could've passed it to day shift but I read the first line — "I'm in a bedsit in one of the Hulme Crescents" — and I don't know. Something about it. I've been processing temporal displacement tickets for two years and they all sound the same. "My anchor failed," "I need extraction," "how do I file an insurance claim." Nobody ever tells you about the wallpaper.</p>
+                <p>You said you were at a concert? Tell me about it. What did they play? What did they close with? I've never been to the 80s. I've done the training simulations but those are just corridors with Duran Duran playing on a loop. I asked my supervisor once if there were better sims and she said the licensing budget only covers Duran Duran. Two years of Duran Duran, Jamie. Two years.</p>
+                <p>Was the concert loud? Was it good?</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="setSableKnowsConcert(true); goToScreen('M9')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 20 -->
+        <div id="Reply20" class="screen">
+            <h2>Reply 20</h2>
+            <div class="message-header">Pulling up your anchor specs... okay.</div>
+            <div class="content">
+                <p>Your unit is baselined at <strong>347 Hz</strong>. That's standard for TEMPO BASIC packages. The harmonic resonance is what locks your return coordinates — if the calibration's drifted, your anchor is essentially looking for a frequency that doesn't match anymore. Like tuning a radio to the wrong station.</p>
+                <p>If you were trying to do anything with that number you'd need to — actually, forget I said anything. That's above my pay grade.</p>
+                <p>But. You know. 347 Hz. In case you needed it. For no reason.</p>
+                <div class="write-down">Write this down: CALIBRATION FREQUENCY — 347 Hz</div>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="addItem('CALIBRATION FREQUENCY — 347 Hz'); goToScreen('M2')">Return to Main Menu</a>
+            </div>
+        </div>
+
+        <!-- Reply 21 -->
+        <div id="Reply21" class="screen">
+            <h2>Reply 21</h2>
+            <div class="message-header">A physical extraction team would take... let me check the logistics...</div>
+            <div class="content">
+                <p>Six to eight weeks minimum. That's assuming your authorization clears, which — given the Protocol 7 flag — is not a given. And the cost. The cost is... okay, you really don't want to know the cost.</p>
+                <p>Let's keep looking at other options. Please.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M8')">Continue</a>
+            </div>
+        </div>
+
+        <!-- Reply 22 -->
+        <div id="Reply22" class="screen">
+            <h2>Reply 22</h2>
+            <div class="message-header">"Temporal deviation" means your anchor detected an unplanned interaction between you and a temporal local.</div>
+            <div class="content">
+                <p>Usually it's nothing — eye contact, accidentally bumping someone's shoulder, saying "hashtag" in 1987 and getting a strange look.</p>
+                <p>But yours is flagged as "sustained." Which means it lasted more than ninety seconds. It means you weren't just passing through — you <em>stopped</em>. You had a conversation. And the anchor noticed.</p>
+                <p>Look, Jamie, I'm Tier 1 tech support. I fix calibration drifts and tell people to restart their pagers. I am out of my depth here. Let me transfer you to someone who isn't.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M7')">Continue to Advanced Support</a>
+            </div>
+        </div>
+
+        <!-- Reply 23 -->
+        <div id="Reply23" class="screen">
+            <h2>Reply 23</h2>
+            <div class="message-header"><em>This is Jamie's message — the one sent to Sable at 2am, sitting on the bedsit floor with the pager balanced on one knee and the bass from downstairs coming up through the concrete.</em></div>
+            <div class="content">
+                <p>They were standing outside the Haçienda in the rain. The band was still playing — you could hear "Temptation" through the walls, the last song, and everyone else had stayed inside for it. But they were out there alone, leaning against the wall, not smoking, not doing anything, just standing in it.</p>
+                <p>I don't know why I stopped.</p>
+                <p>We talked for twenty minutes. They told me about their job at the printworks and their dog named Keith and their sister in Leeds who they hadn't spoken to in a year. I told them — well, I told them the truth. About where I was really from. When I was really from. They asked if Thatcher was still Prime Minister in the future. I said no. They said, "Well, that's something."</p>
+                <p>They didn't believe the rest of it. They laughed. Not at me. With me. They said, "That's the best chat-up line I've ever heard." And I said it wasn't a line. And they said, "I know. That's why it's good."</p>
+                <p>Inside, the song was ending. Outside, just rain and the two of us and twenty minutes I didn't want to end.</p>
+                <p>It was the best conversation I've had in months. Maybe longer.</p>
+                <p>And you're telling me that's what broke everything?</p>
+                <hr class="hr">
+                <p><strong>Sable's reply, two days later:</strong></p>
+                <p>Yeah. That's what broke everything.</p>
+                <p>...</p>
+                <p>It sounds like it was worth it, though.</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M9')">A) "It was."</a>
+                <a class="choice" onclick="goToScreen('Reply18')">B) "Help me get home. Off the record."</a>
+                <a class="choice" onclick="goToScreen('Reply28')">C) Read further. Keep thinking about the stranger.</a>
+            </div>
+        </div>
+
+        <!-- Reply 24 -->
+        <div id="Reply24" class="screen">
+            <h2>Reply 24</h2>
+            <div class="message-header">RESET FAILED.</div>
+            <div class="content">
+                <p>Authorization mismatch detected. Your anchor reset request has been denied and your ticket has been suspended for 30 days.</p>
+                <p>We apologize for any inconvenience across all timelines.</p>
+                <p><em>(You are alone in the bedsit again. Through the wall, someone is watching Top of the Pops. You can hear the applause, tinny and far away. The kebab shop is still open. It will be a long month.)</em></p>
+                <p><em>(Your ticket suspension lasts 30 days. After that, you may reattempt the form.)</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M1')">Return to Main Menu</a>
+            </div>
+        </div>
+
+        <!-- Reply 25 -->
+        <div id="Reply25" class="screen">
+            <h2>Reply 25</h2>
+            <div class="message-header">ANCHOR RESET INITIATED.</div>
+            <div class="content">
+                <p style="font-family: 'IBM Plex Mono', monospace; background-color: rgba(0, 0, 0, 0.3); padding: 1rem; margin: 1rem 0;">Override: LOOKING GLASS<br>
+                Serial: #TRV-0447-87M<br>
+                Frequency: 347 Hz<br>
+                Verification: CONFIRMED</p>
+                <p>Return transport activating in 48 hours. Please proceed to your original arrival coordinates (the Haçienda, rear entrance, 23:00 local time).</p>
+                <p>Thank you for choosing ChronoServ Temporal Solutions™. We appreciate your patience.</p>
+                <hr class="hr">
+                <p>There's a handwritten note at the bottom of the form, in blue biro, barely legible:</p>
+                <p><em>Good luck, Jamie. I'm glad you told me about the concert. Delete this one too.</em></p>
+                <p><em>— S</em></p>
+                <p><em>(You will be home in 48 hours. You will hand in your pager at the ChronoServ depot in Salford Quays and take the tram back to your flat and everything will be 2045 again. Sable's shift ends at 6am. You will never know her real name.)</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('end')">THE END</a>
+            </div>
+        </div>
+
+        <!-- Reply 26 -->
+        <div id="Reply26" class="screen">
+            <h2>Reply 26</h2>
+            <div class="message-header">ChronoServ Temporal Solutions™ — Extraction Authorization</div>
+            <div class="content">
+                <p><strong>Rescue extraction approved and scheduled.<br>
+                Arrival window:</strong> 6–8 weeks from authorization.<br>
+                <strong>Location:</strong> Manchester Central, Platform 4.</p>
+                <p><strong>Total charges:</strong> £2,347,891.00<br>
+                <strong>Payment plan available:</strong> £4,211/month for 47 years.<br>
+                <strong>First payment due upon return to origin timeline.</strong></p>
+                <p>Welcome home, Jamie.</p>
+                <p><em>(You will be seventy-four when you make the last payment. The stranger will have been dead for years by then. You won't have spoken to them again. You went home. That's what matters. Isn't it?)</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('end')">THE END</a>
+            </div>
+        </div>
+
+        <!-- Reply 27 -->
+        <div id="Reply27" class="screen">
+            <h2>Reply 27</h2>
+            <div class="message-header">CHRONOSERV ANCHOR RESET — FORM TR-7</div>
+            <div class="content">
+                <div class="form-box">
+                    <div class="form-line">╔══════════════════════════════════════════════════╗</div>
+                    <div class="form-line">║  CHRONOSERV ANCHOR RESET — FORM TR-7            ║</div>
+                    <div class="form-line">║                                                  ║</div>
+                    <div class="form-line">║  TEMPORAL POSITION VERIFICATION:                 ║</div>
+                    <div class="form-line">║  To confirm your position in the timestream,     ║</div>
+                    <div class="form-line">║  answer the following:                           ║</div>
+                    <div class="form-line">║                                                  ║</div>
+                    <div class="form-line">║  What was the final song performed at the last   ║</div>
+                    <div class="form-line">║  major concert event in your area?               ║</div>
+                    <div class="form-line">║                                                  ║</div>
+                    <div class="form-line">║  This is your VERIFICATION WORD.                 ║</div>
+                    <div class="form-line">║                                                  ║</div>
+                    <div class="form-line">║  RESET CALCULATION:                              ║</div>
+                    <div class="form-line">║  1. Write your override code.                    ║</div>
+                    <div class="form-line">║  2. Write your verification word below it.       ║</div>
+                    <div class="form-line">║  3. Count the unique letters they share.         ║</div>
+                    <div class="form-line">║  4. Multiply by 5.                               ║</div>
+                    <div class="form-line">║  5. Go to that Reply number.                     ║</div>
+                    <div class="form-line">╚══════════════════════════════════════════════════╝</div>
+                </div>
+                <p style="margin-top: 1.5rem;"><em>(If you've done this right, you know where to go.)</em></p>
+                <p><em>(If you haven't — try Reply 24.)</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('M2')">Return to Main Menu</a>
+            </div>
+        </div>
+
+        <!-- Reply 28 -->
+        <div id="Reply28" class="screen">
+            <h2>Reply 28</h2>
+            <div class="message-header"><em>(You won't find this reply listed in the ChronoServ manual. It isn't a reply at all. It's the thing Jamie wrote on the back of the pager's warranty card at 4am, in the dark, with the rain on the window and someone three floors down playing a Smiths record that won't exist in a few months because the band is about to fall apart and nobody here knows it yet.)</em></div>
+            <div class="content">
+                <p>I've been thinking about what you said, Sable. About it being worth it.</p>
+                <p>This morning I walked to Piccadilly Records and spent forty minutes flipping through the racks. The new Cure album is in — <em>Kiss Me Kiss Me Kiss Me</em> — and the woman behind the counter played "Just Like Heaven" while I was browsing and it sounded like something from a future that hasn't been decided yet. She told me they're touring later this year. December. She had the dates written on a card by the till: Birmingham, Wembley. She said if I wanted tickets I'd better write off now because they'd sell out.</p>
+                <p>I bought the album. I bought the NME too. There's a piece about a DJ night starting at the Haçienda — Friday nights, and apparently they're playing this music from Chicago and Detroit that doesn't sound like anything else. House music. The article says it's going to change everything. I don't know if that's true. From where I'm standing, everything is already changing. The Smiths are finished. New Order just played their last gig here. Something is ending and something is starting and I'm standing in the middle of it with a pager that doesn't work and nowhere to be.</p>
+                <p>What I know is that I walked back to the bedsit through Hulme in the rain and a kid on the ground floor was playing "Blue Monday" so loud the windows were rattling and two women were arguing about whose turn it was to use the phone box on the corner and none of it was optimized. None of it was algorithmic. None of it knew what was coming.</p>
+                <p>I keep trying to think about what I'm going back to. My flat. My job. The 2045 version of everything where the music is generated and the conversations are mediated and nobody stands outside a nightclub in the rain for no reason.</p>
+                <p>The stranger told me about their dog named Keith. They told me about their sister in Leeds. They asked me if the future was any good and I didn't know what to say.</p>
+                <p>They laughed when I told them where I was from. Not because it was funny. Because it was impossible and they didn't care.</p>
+                <p>I know you can't write back to this. I know that's not how any of this works. But I wanted to tell someone, even if it's just a night-shift support agent in 2045 who's never been to the 80s and only knows them from training corridors with Duran Duran on a loop.</p>
+                <p>You chose my file, Sable. You told me that. Out of all the tickets and all the flags and all the stranded idiots in all the decades — you chose mine. I don't know what that means. I don't know if it means anything. But I wanted you to know that it mattered. That you mattered.</p>
+                <p>The Cure are playing Birmingham in December. I've got enough for a train ticket. I've got enough for a few more months of bedsits. I know how bedsits work now. I know where the kebab shop is and how much it costs and which newsagent stays open late.</p>
+                <p>I think I'm going to stay.</p>
+                <p>I think this is where I'm supposed to be.</p>
+                <hr class="hr">
+                <p><em>(Jamie Kowalski's ChronoServ account was marked INACTIVE on August 3, 1987. No further tickets were filed. The pager was found in a skip behind the Hulme Crescents in late November, wrapped in a copy of the NME with The Cure on the cover. The battery was dead. The screen still read: CONNECTED — NO NEW MESSAGES.)</em></p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('end')">THE END</a>
+            </div>
+        </div>
+
+        <!-- Reply 29 -->
+        <div id="Reply29" class="screen">
+            <h2>Reply 29</h2>
+            <div class="message-header"><em>This reply will only make sense if you asked Sable how their night was going.</em></div>
+            <div class="content">
+                <p><em>Sable's reply. It arrives in a different envelope — not the ChronoServ stationery. A plain brown envelope, the kind you'd buy at a newsagent. The letter inside is written on both sides of a single sheet. The handwriting is smaller than before, like she was trying to fit everything in.</em></p>
+                <hr class="hr">
+                <p>Jamie.</p>
+                <p>I need to tell you something and I'm going to tell you fast because my shift ends in forty minutes and if I think about this too long I won't send it.</p>
+                <p>I chose your file. I told you that. What I didn't tell you is why.</p>
+                <p>I've been on night shift for two years. Not because they need me here — the system runs itself, mostly. I'm here because I asked to be. Day shift is twenty people in a room processing tickets and nobody talks to each other. Night shift is just me and the chatbot escalations and sometimes a voice from 1953 complaining about signal strength.</p>
+                <p>I read your first message six times. The bit about the wallpaper. The bit about the three different decades arguing through the walls. Nobody writes like that on a support ticket. Everybody else just writes "anchor broken, please fix." You wrote about the rain.</p>
+                <p>I'm not supposed to have a favorite ticket. That's not a thing that's supposed to happen. There's a whole section in the employee handbook about maintaining professional distance from temporally displaced clients (Section 11.4, "Boundaries Across Time"). I read it when I started. It made sense then.</p>
+                <p>It doesn't make sense anymore.</p>
+                <p>I don't know what I'm saying. I know exactly what I'm saying. I'm saying that your messages are the first thing I check when I clock in and I read them more than once and I keep the ones I'm supposed to delete.</p>
+                <p>There's a song that plays in the canteen sometimes. I don't know who it's by — someone from your decade, probably. The chorus goes something like "save it for later." I catch myself humming it on the walk home.</p>
+                <p>I can still help you get home. That hasn't changed. I'll break every rule in the handbook if that's what it takes. But I wanted you to know — whatever you decide — that it mattered. The messages. The concert. The rain.</p>
+                <p>You asked how my night was going. Nobody asks that.</p>
+                <p>— Sable</p>
+            </div>
+            <div class="choices">
+                <a class="choice" onclick="goToScreen('Reply23')">A) Tell Sable about the stranger. She should know everything.</a>
+                <a class="choice" onclick="goToScreen('Reply18')">B) "Help me get home. Off the record. And when I get back — how do I find you?"</a>
+                <a class="choice" onclick="goToScreen('Reply28')">C) Don't reply. Read the letter again. Then again. Fold it carefully.</a>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end" class="screen end-screen">
+            <h1 style="animation: slowFadeIn 3s ease-out;">END</h1>
+            <div style="margin-top: 3rem; animation: slowFadeIn 4s ease-out;">
+                <div class="solution-container">
+                    <button class="solution-toggle" onclick="toggleSolution()">Show Solution</button>
+                    <div id="solutionContent" class="solution-content">
+                        <p><strong>The Solution to Form TR-7:</strong></p>
+                        <p>The last song New Order played at the Haçienda, Manchester, on June 10, 1987, was "Temptation."</p>
+                        <p>LOOKING GLASS and TEMPTATION share five unique letters: T, A, I, N, O.</p>
+                        <p>Five times five is twenty-five.</p>
+                        <p>The answer is <strong>Reply 25</strong>.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="utility-links" style="margin-top: 4rem;">
+                <a class="utility-link" onclick="goToScreen('titleScreen')">Start Over</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notebook Sidebar -->
+    <div class="notebook">
+        <div class="notebook-title">COLLECTED</div>
+        <div id="notebookItems"></div>
+    </div>
+
+    <style>
+        @keyframes slowFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+
+    <script>
+        // State management
+        const state = {
+            currentScreen: 'titleScreen',
+            items: [],
+            sableKnowsConcert: false
+        };
+
+        function goToScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(function(screen) {
+                screen.classList.remove('active');
+            });
+
+            // Show target screen
+            var targetScreen = document.getElementById(screenId);
+            if (targetScreen) {
+                targetScreen.classList.add('active');
+                state.currentScreen = screenId;
+                window.scrollTo(0, 0);
+
+                // Check if we should show the M10 option
+                checkM10Availability();
+            } else {
+                console.error('Screen not found: ' + screenId);
+            }
+        }
+
+        function addItem(item) {
+            if (state.items.indexOf(item) === -1) {
+                state.items.push(item);
+                updateNotebook();
+            }
+        }
+
+        function updateNotebook() {
+            var notebookItems = document.getElementById('notebookItems');
+            if (!notebookItems) return;
+            notebookItems.innerHTML = '';
+            state.items.forEach(function(item) {
+                var itemEl = document.createElement('div');
+                itemEl.className = 'notebook-item';
+                itemEl.textContent = item;
+                notebookItems.appendChild(itemEl);
+            });
+        }
+
+        function checkM10Availability() {
+            var choiceToM10 = document.getElementById('choiceToM10');
+            var choiceToReply29 = document.getElementById('choiceToReply29');
+
+            // M10 is available if we have all three collectible items
+            var hasAllItems = state.items.length === 3;
+            if (choiceToM10) {
+                choiceToM10.style.display = hasAllItems ? 'block' : 'none';
+            }
+
+            // Reply 29 is available if Sable knows the concert was discussed
+            if (choiceToReply29) {
+                choiceToReply29.style.display = state.sableKnowsConcert ? 'block' : 'none';
+            }
+        }
+
+        function setSableKnowsConcert(value) {
+            state.sableKnowsConcert = value;
+            checkM10Availability();
+        }
+
+        function toggleSolution() {
+            var solutionContent = document.getElementById('solutionContent');
+            if (solutionContent) solutionContent.classList.toggle('visible');
+        }
+
+        function resetGame() {
+            state.items = [];
+            state.sableKnowsConcert = false;
+            updateNotebook();
+            goToScreen('titleScreen');
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            updateNotebook();
+            checkM10Availability();
+        });
+    </script>
+</body>
+</html>
